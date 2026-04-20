@@ -1,16 +1,7 @@
-const CACHE_NAME = 'gastos-hogar-v2';
-const APP_SHELL = [
-  './',
-  './index.html',
-  './manifest.webmanifest',
-  './icons/icon-192.png',
-  './icons/icon-512.png'
-];
+const CACHE_NAME = 'gastos-hogar-v3';
 
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)).then(() => self.skipWaiting())
-  );
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {
@@ -25,6 +16,7 @@ self.addEventListener('fetch', event => {
   const request = event.request;
   if (request.method !== 'GET') return;
 
+  // Navegaciones: red primero, fallback a cache del index
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
@@ -38,6 +30,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  // Resto: cache primero, red de fallback, guardar en cache cuando responda OK
   event.respondWith(
     caches.match(request).then(cached => {
       return cached || fetch(request).then(response => {
@@ -46,7 +39,7 @@ self.addEventListener('fetch', event => {
         caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
         return response;
       }).catch(() => {
-        // Fallback for offline if necessary
+        // Offline sin cache: devolver undefined silenciosamente
       });
     })
   );
