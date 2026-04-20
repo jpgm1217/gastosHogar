@@ -419,6 +419,7 @@
     </div>
     <button class="btn-primary" onclick="guardarConfig()">Guardar</button>
     <button class="btn-ghost btn-danger" onclick="salir()">Salir / Cambiar nombre</button>
+    <button class="btn-primary" id="btn-install-pwa" style="display:none; margin-top:12px; background:linear-gradient(135deg,#eab308,#ca8a04)" onclick="instalarApp()">📲 Instalar como App</button>
   </div>
 </div>
 
@@ -627,9 +628,34 @@ window.onload = () => {
   iniciarFirebase();
   
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service-worker.js').catch(err => console.log('SW no registrado', err));
+    navigator.serviceWorker.register('./service-worker.js?v=2').then(reg => {
+      console.log('SW registrado', reg.scope);
+    }).catch(err => console.log('SW no registrado', err));
   }
 };
+
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const btn = document.getElementById('btn-install-pwa');
+  if(btn) btn.style.display = 'block';
+  console.log('PWA lista para instalar');
+  toast('¡App lista para instalar! Abre la Configuración ⚙️');
+});
+
+function instalarApp() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then((choiceResult) => {
+      if (choiceResult.outcome === 'accepted') {
+        console.log('PWA instalada');
+      }
+      deferredPrompt = null;
+      document.getElementById('btn-install-pwa').style.display = 'none';
+    });
+  }
+}
 
 function iniciarFirebase() {
   if(typeof firebase === 'undefined') {
